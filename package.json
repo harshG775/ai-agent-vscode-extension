@@ -12,25 +12,19 @@
     "activationEvents": [],
     "main": "./dist/extension.js",
     "contributes": {
-        "commands": [
-            {
-                "command": "ai-agent-vscode-extention.helloWorld",
-                "title": "Hello World"
-            }
-        ],
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "myExtensionSidebar",
+                    "id": "extensionSidebar",
                     "title": "My Extension",
                     "icon": "media/icon.svg"
                 }
             ]
         },
         "views": {
-            "myExtensionSidebar": [
+            "extensionSidebar": [
                 {
-                    "id": "myExtensionView",
+                    "id": "extensionView",
                     "name": "AI Agent",
                     "icon": "media/icon.svg",
                     "type": "webview"
