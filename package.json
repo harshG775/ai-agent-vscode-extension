@@ -32,7 +32,8 @@
                 {
                     "id": "myExtensionView",
                     "name": "AI Agent",
-                    "icon": "media/icon.svg"
+                    "icon": "media/icon.svg",
+                    "type": "webview"
                 }
             ]
         }
