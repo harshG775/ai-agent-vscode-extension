@@ -17,7 +17,25 @@
                 "command": "ai-agent-vscode-extention.helloWorld",
                 "title": "Hello World"
             }
-        ]
+        ],
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "myExtensionSidebar",
+                    "title": "My Extension",
+                    "icon": "media/icon.svg"
+                }
+            ]
+        },
+        "views": {
+            "myExtensionSidebar": [
+                {
+                    "id": "myExtensionView",
+                    "name": "AI Agent",
+                    "icon": "media/icon.svg"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "pnpm run package",
