@@ -2,26 +2,7 @@ import * as vscode from "vscode";
 
 class MyWebviewProvider implements vscode.WebviewViewProvider {
     constructor(private readonly _extensionUri: vscode.Uri) {}
-
-    public resolveWebviewView(webviewView: vscode.WebviewView) {
-        webviewView.webview.options = {
-            enableScripts: true,
-            localResourceRoots: [this._extensionUri],
-        };
-
-        webviewView.webview.html = this._getHtml(webviewView.webview);
-
-        // Handle messages sent from the webview to the extension
-        webviewView.webview.onDidReceiveMessage((data) => {
-            switch (data.type) {
-                case "askAgent":
-                    vscode.window.showInformationMessage(`Agent is thinking about: ${data.value}`);
-                    break;
-            }
-        });
-    }
-
-    private _getHtml(webview: vscode.Webview) {
+    private getHtml(webview: vscode.Webview) {
         return `
             <!DOCTYPE html>
             <html>
@@ -48,6 +29,22 @@ class MyWebviewProvider implements vscode.WebviewViewProvider {
                 </body>
             </html>
         `;
+    }
+    public resolveWebviewView(webviewView: vscode.WebviewView) {
+        webviewView.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [this._extensionUri],
+        };
+
+        webviewView.webview.html = this.getHtml(webviewView.webview);
+
+        webviewView.webview.onDidReceiveMessage((data) => {
+            switch (data.type) {
+                case "askAgent":
+                    vscode.window.showInformationMessage(`Agent is thinking about: ${data.value}`);
+                    break;
+            }
+        });
     }
 }
 
