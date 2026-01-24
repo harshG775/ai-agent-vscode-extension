@@ -1,14 +1,13 @@
 import * as vscode from "vscode";
-import { API, GitExtension } from "./types/git";
-const scmActionGenerateCommitMessage = async (gitExtension: GitExtension) => {
+import { API, GitExtension, Repository } from "./types/git";
+const generateCommitMessage = (): string => {
+    return "<feat: ai commit message>";
+};
+const scmActionGenerateCommitMessage = async (repo: Repository) => {
     const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
     status.text = "$(sync~spin) Generating commit message...";
     status.show();
     try {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        const gitApi: API = gitExtension.getAPI(1);
-
-        const repo = gitApi.repositories[0];
         const diffs = await repo.diffIndexWithHEAD();
 
         if (!diffs) {
@@ -20,11 +19,9 @@ const scmActionGenerateCommitMessage = async (gitExtension: GitExtension) => {
         for (const diff of diffs) {
             console.log("diff:", diff);
         }
-
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         // TODO: set ai response in the commit input box
-        repo.inputBox.value = "<feat: ai commit message>";
-    } catch (error) {
-        console.log(error);
+        repo.inputBox.value = generateCommitMessage();
     } finally {
         status.dispose();
     }
@@ -38,6 +35,8 @@ export const activate = async (context: vscode.ExtensionContext) => {
         return;
     }
     const gitExports = await gitExtension.activate();
+    const gitApi: API = gitExports.getAPI(1);
+    const repo = gitApi.repositories[0];
 
     context.subscriptions.push(
         vscode.commands.registerCommand("onyxExtension.scmAction", async () => {
@@ -48,7 +47,16 @@ export const activate = async (context: vscode.ExtensionContext) => {
                     cancellable: false,
                 },
                 async () => {
-                    await scmActionGenerateCommitMessage(gitExports);
+                    await vscode.window.withProgress(
+                        {
+                            location: vscode.ProgressLocation.SourceControl,
+                            title: "Generating commit message with AI...",
+                            cancellable: false,
+                        },
+                        async () => {
+                            await scmActionGenerateCommitMessage(repo);
+                        },
+                    );
                 },
             );
         }),
