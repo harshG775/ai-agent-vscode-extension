@@ -22,8 +22,8 @@
             "scm/title": [
                 {
                     "command": "onyx.git.generateCommitMessage",
-                    "group": "navigation",
-                    "when": "scmProvider == git"
+                    "when": "scmProvider == git",
+                    "group": "navigation@1"
                 }
             ]
         }
