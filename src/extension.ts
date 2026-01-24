@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { API, GitExtension, Repository } from "./types/git";
+import { GitExtension, Repository } from "./types/git";
 
 const generateCommitMessage = async (repo: Repository) => {
     const diffs = await repo.diffIndexWithHEAD();
@@ -18,7 +18,7 @@ const generateCommitMessage = async (repo: Repository) => {
     repo.inputBox.value = "<feat: ai commit message>";
 };
 
-const scmActionGenerateCommitMessage = async () => {
+const scmActionGenerateCommitMessage = async (repo: Repository) => {
     await vscode.window.withProgress(
         {
             location: vscode.ProgressLocation.SourceControl,
@@ -26,21 +26,24 @@ const scmActionGenerateCommitMessage = async () => {
             cancellable: false,
         },
         async () => {
-            const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git");
-
-            if (!gitExtension) {
-                vscode.window.showErrorMessage("onyxExtension: Git extension not enabled");
-                return;
-            }
-            const gitExports = await gitExtension.activate();
-            const gitApi: API = gitExports.getAPI(1);
-            const repo = gitApi.repositories[0];
             await generateCommitMessage(repo);
         },
     );
 };
 export const activate = async (context: vscode.ExtensionContext) => {
-    context.subscriptions.push(
-        vscode.commands.registerCommand("onyxExtension.scmAction", scmActionGenerateCommitMessage),
-    );
+    const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git");
+
+    if (gitExtension) {
+        const gitExports = await gitExtension.activate();
+        const gitApi = gitExports.getAPI(1);
+
+        context.subscriptions.push(
+            vscode.commands.registerCommand("onyxExtension.scmAction", () =>
+                scmActionGenerateCommitMessage(gitApi.repositories[0]),
+            ),
+        );
+    } else {
+        vscode.window.showErrorMessage("onyxExtension: Git extension not enabled");
+        return;
+    }
 };
