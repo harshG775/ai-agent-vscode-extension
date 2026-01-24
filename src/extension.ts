@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { API, GitExtension } from "./types/git";
-const scmAction = async (gitExports: GitExtension) => {
-    const gitApi: API = gitExports.getAPI(1);
+const scmAction = async (gitExtension: GitExtension) => {
+    const gitApi: API = gitExtension.getAPI(1);
 
     if (!gitApi) {
         vscode.window.showErrorMessage("Git extension not found");
@@ -14,11 +14,11 @@ const scmAction = async (gitExports: GitExtension) => {
     if (gitApi.repositories.length > 0) {
         const repo = gitApi.repositories[0];
 
-        const branchName = repo.state.HEAD?.name;
-        console.log(`Current Branch: ${branchName}`);
-
-        const changes = repo.state.workingTreeChanges;
-        console.log(`Changed files: ${changes.length}`);
+        const stagedFiles = repo.state.indexChanges;
+        stagedFiles?.forEach((change) => {
+            console.log(`Staged File: ${change.originalUri}`);
+            console.log(`Status: ${change.status}`);
+        });
     }
 };
 
