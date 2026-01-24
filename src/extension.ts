@@ -1,25 +1,23 @@
 import * as vscode from "vscode";
 import { API, GitExtension } from "./types/git";
-const scmAction = async (gitExtension: GitExtension) => {
+const scmActionGenerateCommitMessage = async (gitExtension: GitExtension) => {
     const gitApi: API = gitExtension.getAPI(1);
+    
+    const repo = gitApi.repositories[0];
+    const diffs = await repo.diffIndexWithHEAD();
 
-    if (!gitApi) {
-        vscode.window.showErrorMessage("Git extension not found");
+    if (!diffs) {
+        vscode.window.showInformationMessage("No staged changes to analyze.");
         return;
     }
-    if (gitApi.repositories.length === 0) {
-        vscode.window.showWarningMessage("No Git repositories found");
-        return;
-    }
-    if (gitApi.repositories.length > 0) {
-        const repo = gitApi.repositories[0];
 
-        const stagedFiles = repo.state.indexChanges;
-        stagedFiles?.forEach((change) => {
-            console.log(`Staged File: ${change.originalUri}`);
-            console.log(`Status: ${change.status}`);
-        });
+    for (const diff of diffs) {
+        console.log("diff:", diff);
     }
+
+    // set ai response in the commit input box
+    repo.inputBox.value = "<feat: ai commit message>";
+
 };
 
 export const activate = async (context: vscode.ExtensionContext) => {
@@ -31,5 +29,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
     }
     const gitExports = await gitExtension.activate();
 
-    context.subscriptions.push(vscode.commands.registerCommand("onyxExtension.scmAction", () => scmAction(gitExports)));
+    context.subscriptions.push(
+        vscode.commands.registerCommand("onyxExtension.scmAction", () => scmActionGenerateCommitMessage(gitExports)),
+    );
 };
