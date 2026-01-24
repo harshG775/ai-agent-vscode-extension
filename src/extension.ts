@@ -32,11 +32,11 @@ const scmActionGenerateCommitMessage = async (repo: Repository) => {
 };
 export const activate = async (context: vscode.ExtensionContext) => {
     const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git");
-
+    
     if (gitExtension) {
         const gitExports = await gitExtension.activate();
+        await vscode.commands.executeCommand("setContext", "onyxExtension.gitReady", true);
         const gitApi = gitExports.getAPI(1);
-
         context.subscriptions.push(
             vscode.commands.registerCommand("onyxExtension.scmAction", () =>
                 scmActionGenerateCommitMessage(gitApi.repositories[0]),

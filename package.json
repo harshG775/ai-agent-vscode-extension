@@ -27,7 +27,8 @@
             "scm/title": [
                 {
                     "command": "onyxExtension.scmAction",
-                    "group": "navigation"
+                    "group": "navigation",
+                    "when": "onyxExtension.gitReady"
                 }
             ]
         }
