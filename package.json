@@ -11,24 +11,23 @@
     ],
     "main": "./dist/extension.js",
     "activationEvents": [
-        "onView:scm",
         "onStartupFinished",
-        "onCommand:onyxExtension.scmAction"
+        "onView:scm"
     ],
     "contributes": {
         "commands": [
             {
-                "command": "onyxExtension.scmAction",
-                "title": "Generate Commit message with Onyx",
-                "icon": "media/icon.svg"
+                "command": "onyx.git.generateCommitMessage",
+                "title": "Onyx: Generate Commit Message",
+                "icon": "media/commit.svg"
             }
         ],
         "menus": {
             "scm/title": [
                 {
-                    "command": "onyxExtension.scmAction",
+                    "command": "onyx.git.generateCommitMessage",
                     "group": "navigation",
-                    "when": "onyxExtension.gitReady"
+                    "when": "scmProvider == git"
                 }
             ]
         }

@@ -18,32 +18,33 @@ const generateCommitMessage = async (repo: Repository) => {
     repo.inputBox.value = "<feat: ai commit message>";
 };
 
-const scmActionGenerateCommitMessage = async (repo: Repository) => {
+const runGenerateCommitMessage = async (repo: Repository) => {
     await vscode.window.withProgress(
         {
             location: vscode.ProgressLocation.SourceControl,
-            title: "Generating commit message with AI...",
+            title: "Onyx: Generating commit message…",
             cancellable: false,
         },
-        async () => {
-            await generateCommitMessage(repo);
-        },
+        () => generateCommitMessage(repo),
     );
 };
 export const activate = async (context: vscode.ExtensionContext) => {
     const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git");
-    
-    if (gitExtension) {
-        const gitExports = await gitExtension.activate();
-        await vscode.commands.executeCommand("setContext", "onyxExtension.gitReady", true);
-        const gitApi = gitExports.getAPI(1);
-        context.subscriptions.push(
-            vscode.commands.registerCommand("onyxExtension.scmAction", () =>
-                scmActionGenerateCommitMessage(gitApi.repositories[0]),
-            ),
-        );
-    } else {
-        vscode.window.showErrorMessage("onyxExtension: Git extension not enabled");
+    if (!gitExtension) {
+        vscode.window.showErrorMessage("Onyx: Git extension not available");
         return;
     }
+    const gitExports = await gitExtension.activate();
+    const gitApi = gitExports.getAPI(1);
+    context.subscriptions.push(
+        vscode.commands.registerCommand("onyx.git.generateCommitMessage", () => {
+            const repo = gitApi.repositories[0];
+            if (!repo) {
+                vscode.window.showInformationMessage("Onyx: No Git repository found");
+                return;
+            }
+
+            runGenerateCommitMessage(repo);
+        }),
+    );
 };
