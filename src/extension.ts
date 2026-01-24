@@ -21,30 +21,21 @@ const generateCommitMessage = async (repo: Repository) => {
 const scmActionGenerateCommitMessage = async () => {
     await vscode.window.withProgress(
         {
-            location: vscode.ProgressLocation.Notification,
+            location: vscode.ProgressLocation.SourceControl,
             title: "Generating commit message with AI...",
             cancellable: false,
         },
         async () => {
-            await vscode.window.withProgress(
-                {
-                    location: vscode.ProgressLocation.SourceControl,
-                    title: "Generating commit message with AI...",
-                    cancellable: false,
-                },
-                async () => {
-                    const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git");
+            const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git");
 
-                    if (!gitExtension) {
-                        vscode.window.showErrorMessage("onyxExtension: Git extension not enabled");
-                        return;
-                    }
-                    const gitExports = await gitExtension.activate();
-                    const gitApi: API = gitExports.getAPI(1);
-                    const repo = gitApi.repositories[0];
-                    await generateCommitMessage(repo);
-                },
-            );
+            if (!gitExtension) {
+                vscode.window.showErrorMessage("onyxExtension: Git extension not enabled");
+                return;
+            }
+            const gitExports = await gitExtension.activate();
+            const gitApi: API = gitExports.getAPI(1);
+            const repo = gitApi.repositories[0];
+            await generateCommitMessage(repo);
         },
     );
 };
