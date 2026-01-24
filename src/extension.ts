@@ -1,24 +1,27 @@
 import * as vscode from "vscode";
 
-class WebviewProvider implements vscode.WebviewViewProvider {
-    constructor(private readonly _extensionUri: vscode.Uri) {}
-    private _getHtml(webview: vscode.Webview) {
-        return `
-        <div>hello world
-        ${webview.options.localResourceRoots}</div>
-    `;
+const scmAction = async () => {
+    const gitApi = vscode.extensions.getExtension("vscode.git")?.exports?.getAPI(1);
+    if (!gitApi) {
+        vscode.window.showErrorMessage("Git extension not found");
+        return;
     }
-    public resolveWebviewView(webviewView: vscode.WebviewView) {
-        webviewView.webview.options = {
-            enableScripts: true,
-            localResourceRoots: [this._extensionUri],
-        };
-        webviewView.webview.html = this._getHtml(webviewView.webview);
+    console.log("Git API:", gitApi);
+    console.log("Repositories:", gitApi.repositories);
+
+    const repo = gitApi.repositories[0];
+    if (!repo) {
+        vscode.window.showWarningMessage("No Git repository found");
+        return;
     }
-}
+
+    repo.indexChanges.map((c: vscode.SourceControlResourceState) => {
+        console.log("fsPath:", c.resourceUri);
+        return c.resourceUri;
+    });
+    vscode.window.showInformationMessage("SCM button clicked 🚀");
+};
 
 export const activate = (context: vscode.ExtensionContext) => {
-    const provider = new WebviewProvider(context.extensionUri);
-
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider("extensionView", provider));
+    context.subscriptions.push(vscode.commands.registerCommand("onyxExtension.scmAction", scmAction));
 };

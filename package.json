@@ -9,25 +9,25 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [],
     "main": "./dist/extension.js",
+    "activationEvents": [
+        "onStartupFinished",
+        "onView:scm",
+        "onCommand:onyxExtension.scmAction"
+    ],
     "contributes": {
-        "viewsContainers": {
-            "activitybar": [
+        "commands": [
+            {
+                "command": "onyxExtension.scmAction",
+                "title": "My SCM Action",
+                "icon": "media/icon.svg"
+            }
+        ],
+        "menus": {
+            "scm/title": [
                 {
-                    "id": "extensionSidebar",
-                    "title": "OnyxAI",
-                    "icon": "media/icon.svg"
-                }
-            ]
-        },
-        "views": {
-            "extensionSidebar": [
-                {
-                    "id": "extensionView",
-                    "name": "Chat",
-                    "icon": "media/icon.svg",
-                    "type": "webview"
+                    "command": "onyxExtension.scmAction",
+                    "group": "navigation"
                 }
             ]
         }
