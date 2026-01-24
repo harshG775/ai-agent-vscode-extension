@@ -1,27 +1,35 @@
 import * as vscode from "vscode";
+import { API, GitExtension } from "./types/git";
+const scmAction = async (gitExports: GitExtension) => {
+    const gitApi: API = gitExports.getAPI(1);
 
-const scmAction = async () => {
-    const gitApi = vscode.extensions.getExtension("vscode.git")?.exports?.getAPI(1);
     if (!gitApi) {
         vscode.window.showErrorMessage("Git extension not found");
         return;
     }
-    console.log("Git API:", gitApi);
-    console.log("Repositories:", gitApi.repositories);
-
-    const repo = gitApi.repositories[0];
-    if (!repo) {
-        vscode.window.showWarningMessage("No Git repository found");
+    if (gitApi.repositories.length === 0) {
+        vscode.window.showWarningMessage("No Git repositories found");
         return;
     }
+    if (gitApi.repositories.length > 0) {
+        const repo = gitApi.repositories[0];
 
-    repo.indexChanges.map((c: vscode.SourceControlResourceState) => {
-        console.log("fsPath:", c.resourceUri);
-        return c.resourceUri;
-    });
-    vscode.window.showInformationMessage("SCM button clicked 🚀");
+        const branchName = repo.state.HEAD?.name;
+        console.log(`Current Branch: ${branchName}`);
+
+        const changes = repo.state.workingTreeChanges;
+        console.log(`Changed files: ${changes.length}`);
+    }
 };
 
-export const activate = (context: vscode.ExtensionContext) => {
-    context.subscriptions.push(vscode.commands.registerCommand("onyxExtension.scmAction", scmAction));
+export const activate = async (context: vscode.ExtensionContext) => {
+    const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git");
+
+    if (!gitExtension) {
+        vscode.window.showErrorMessage("onyxExtension: Git extension not enabled");
+        return;
+    }
+    const gitExports = await gitExtension.activate();
+
+    context.subscriptions.push(vscode.commands.registerCommand("onyxExtension.scmAction", () => scmAction(gitExports)));
 };
