@@ -1,6 +1,6 @@
 {
-    "name": "ai-agent-vscode-extention",
-    "displayName": "ai-agent-vscode-extention",
+    "name": "ai-agent-vscode-extension",
+    "displayName": "ai-agent-vscode-extension",
     "description": "",
     "version": "0.0.1",
     "engines": {

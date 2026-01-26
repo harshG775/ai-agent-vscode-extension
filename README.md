@@ -1,6 +1,6 @@
-# ai-agent-vscode-extention README
+# ai-agent-vscode-extension README
 
-This is the README for your extension "ai-agent-vscode-extention". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "ai-agent-vscode-extension". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 
