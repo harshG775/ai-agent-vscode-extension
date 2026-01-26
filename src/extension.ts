@@ -1,47 +1,51 @@
 import * as vscode from "vscode";
 import { GitExtension, Repository } from "./types/git";
 
+function buildCommitPrompt(diff: string) {
+    return [
+        {
+            role: "system",
+            content: "You are a helpful assistant that generates informative git commit messages...",
+        },
+        {
+            role: "user",
+            content: `
+Based on the provided git diff, generate a concise and descriptive commit message.
+
+Rules:
+- Conventional Commits
+- 50-72 char title
+- No backticks
+- No explanations
+
+Diff:
+${diff}
+`,
+        },
+    ];
+}
+
 const generateCommitMessage = async (repo: Repository) => {
     try {
         const changes = await repo.diffIndexWithHEAD();
         if (changes.length <= 0) {
-            vscode.window.showInformationMessage("No changes changes to analyze.");
+            vscode.window.showInformationMessage("No changes to analyze.");
             return;
         }
         //
-        let finnalDiff = "";
+        let finalDiff = "";
+        const MAX_CHARS = 12_000;
+
         for (const diff of changes) {
             const fileDiff = await repo.diffIndexWithHEAD(diff.uri.fsPath);
-            if (!fileDiff || fileDiff.trim() === "") {
-                vscode.window.showInformationMessage("No staged file to analyze.");
-                continue;
+            if (finalDiff.length > MAX_CHARS) {
+                vscode.window.showWarningMessage("Staged changes are too large to summarize accurately.");
+                break;
             }
 
-            finnalDiff += fileDiff;
+            finalDiff += `\n\n---\nFile: ${diff.uri.fsPath}\n---\n${fileDiff}`;
         }
-        const messages = [
-            {
-                role: "system",
-                content:
-                    "You are a helpful assistant that generates informative git commit messages based on git diffs output. Skip preamble and remove all backticks surrounding the commit message.",
-            },
-            {
-                role: "user",
-                content: `
-                Based on the provided git diff, generate a concise and descriptive commit message.
-
-                The commit message should:
-                1. Has a short title (50-72 characters)
-                2. The commit message should adhere to the conventional commit format
-                3. Describe what was changed and why
-                4. Be clear and informative
-
-                'git --no-pager diff --staged --diff-filter=d' Output:
-                ${finnalDiff}
-                `,
-            },
-        ];
-        console.log("Staged Diff for AI$$$:\n", messages);
+        console.log("Staged Diff for AI$$$:\n", buildCommitPrompt(finalDiff));
 
         repo.inputBox.value = "feat: logic implemented via ai";
     } catch (err) {
