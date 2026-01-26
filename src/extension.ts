@@ -2,15 +2,21 @@ import * as vscode from "vscode";
 import { GitExtension, Repository } from "./types/git";
 
 const generateCommitMessage = async (repo: Repository) => {
-    const diffs = await repo.diffIndexWithHEAD();
+    try {
+        const diff = await repo.diff(true);
 
-    if (!diffs || diffs.length === 0) {
-        vscode.window.showInformationMessage("No staged changes to analyze.");
-        return;
+        if (!diff || diff.trim() === "") {
+            vscode.window.showInformationMessage("No staged changes to analyze.");
+            return;
+        }
+
+        console.log("Staged Diff for AI:\n", diff);
+
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        repo.inputBox.value = "feat: logic implemented via ai";
+    } catch (err) {
+        vscode.window.showErrorMessage("Failed to get diff: " + err);
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    repo.inputBox.value = "feat: logic implemented via ai";
 };
 
 const runGenerateCommitMessage = async (repo: Repository) => {
