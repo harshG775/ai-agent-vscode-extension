@@ -85,7 +85,7 @@ commit message here
 };
 
 export const commitGeneratorCommand = async (repo: Repository) => {
-    const OPENROUTER_API_KEY = "";
+    const OPENROUTER_API_KEY = "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";
     
 
     await vscode.window.withProgress(
@@ -115,9 +115,7 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                     recentUserCommits,
                     recentRepoCommits,
                 });
-
                 console.log("messages for AI$$$:\n", messages);
-
                 try {
                     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                         method: "POST",
@@ -133,6 +131,9 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                         }),
                     });
                     const result: any = await response.json();
+                    if (result.error.message) {
+                        throw new Error(result.error.message);
+                    }
                     const responseMessage = result?.choices[0]?.message?.content as string;
                     repo.inputBox.value = responseMessage
                         .replace(/```[\s\S]*?```/g, (block) => block.replace(/```[\w]*\n?/g, "").replace(/```/g, ""))
