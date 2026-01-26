@@ -1,51 +1,39 @@
 import * as vscode from "vscode";
+import { buildCommitPrompt } from "./lib/utils/buildCommitPrompt";
 import { GitExtension, Repository } from "./types/git";
 
-function buildCommitPrompt(diff: string) {
-    return [
-        {
-            role: "system",
-            content: "You are a helpful assistant that generates informative git commit messages...",
-        },
-        {
-            role: "user",
-            content: `
-Based on the provided git diff, generate a concise and descriptive commit message.
 
-Rules:
-- Conventional Commits
-- 50-72 char title
-- No backticks
-- No explanations
+const getDiff = async (repo: Repository) => {
+    const changes = await repo.diffIndexWithHEAD();
+    if (changes.length <= 0) {
+        vscode.window.showInformationMessage("No changes to analyze.");
+        return "";
+    }
+    let finalDiff = "";
+    const MAX_CHARS = 12_000;
 
-Diff:
-${diff}
-`,
-        },
-    ];
-}
+    for (const diff of changes) {
+        const fileDiff = await repo.diffIndexWithHEAD(diff.uri.fsPath);
+        if (finalDiff.length > MAX_CHARS) {
+            vscode.window.showWarningMessage("Staged changes are too large to summarize accurately.");
+            break;
+        }
 
+        finalDiff += `\n\n---\nFile: ${diff.uri.fsPath}\n---\n${fileDiff}`;
+    }
+    return finalDiff || "";
+};
 const generateCommitMessage = async (repo: Repository) => {
     try {
-        const changes = await repo.diffIndexWithHEAD();
-        if (changes.length <= 0) {
-            vscode.window.showInformationMessage("No changes to analyze.");
-            return;
-        }
-        //
-        let finalDiff = "";
-        const MAX_CHARS = 12_000;
+        const diff = await getDiff(repo);
+        const repoName = repo.state.HEAD?.name || "repository: unknown";
+        const branchName = repo.rootUri.fsPath.split(/[\\/]/).pop() || "branch: unknown";
+        const recentRepoCommits = await repo.log({ maxEntries: 5 });
+        const userEmail = await repo.getConfig("user.email");
+        const recentUserCommits = recentRepoCommits.filter((c) => c.authorEmail === userEmail);
 
-        for (const diff of changes) {
-            const fileDiff = await repo.diffIndexWithHEAD(diff.uri.fsPath);
-            if (finalDiff.length > MAX_CHARS) {
-                vscode.window.showWarningMessage("Staged changes are too large to summarize accurately.");
-                break;
-            }
-
-            finalDiff += `\n\n---\nFile: ${diff.uri.fsPath}\n---\n${fileDiff}`;
-        }
-        console.log("Staged Diff for AI$$$:\n", buildCommitPrompt(finalDiff));
+        const commitPrompt = buildCommitPrompt(diff, repoName, branchName, recentUserCommits, recentRepoCommits);
+        console.log("Staged Diff for AI$$$:\n", commitPrompt);
 
         repo.inputBox.value = "feat: logic implemented via ai";
     } catch (err) {
