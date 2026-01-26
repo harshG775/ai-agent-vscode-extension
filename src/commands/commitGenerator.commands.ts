@@ -4,7 +4,7 @@ import { Commit, Repository } from "../types/git";
 const getDiff = async (repo: Repository, { maxChars = 12_000 }: { maxChars: number }) => {
     const changes = await repo.diffIndexWithHEAD();
     if (changes.length <= 0) {
-        vscode.window.showInformationMessage("No changes to analyze.");
+        vscode.window.showInformationMessage("No changes in staging to analyze.");
         return "";
     }
     let finalDiff = "";
@@ -85,7 +85,7 @@ commit message here
 };
 
 export const commitGeneratorCommand = async (repo: Repository) => {
-    const OPENROUTER_API_KEY = "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";
+    const OPENROUTER_API_KEY = "";
     
 
     await vscode.window.withProgress(
@@ -133,9 +133,10 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                         }),
                     });
                     const result: any = await response.json();
-                    // const responseMessage = result.choices[0].message;
-                    console.log(result);
-                    repo.inputBox.value = "responseMessage.content";
+                    const responseMessage = result?.choices[0]?.message?.content as string;
+                    repo.inputBox.value = responseMessage
+                        .replace(/```[\s\S]*?```/g, (block) => block.replace(/```[\w]*\n?/g, "").replace(/```/g, ""))
+                        .trim();;
                 } catch (err) {
                     vscode.window.showErrorMessage("AI api Error: " + err);
                 }
