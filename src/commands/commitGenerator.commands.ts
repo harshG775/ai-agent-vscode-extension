@@ -4,7 +4,7 @@ import { Commit, Repository } from "../types/git";
 const getDiff = async (repo: Repository, { maxChars = 12_000 }: { maxChars: number }) => {
     const changes = await repo.diffIndexWithHEAD();
     if (changes.length <= 0) {
-        vscode.window.showInformationMessage("No changes in staging to analyze.");
+        vscode.window.showWarningMessage("No changes in staging to analyze.");
         return "";
     }
     let finalDiff = "";
@@ -138,10 +138,10 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                         .replace(/```[\s\S]*?```/g, (block) => block.replace(/```[\w]*\n?/g, "").replace(/```/g, ""))
                         .trim();;
                 } catch (err) {
-                    vscode.window.showErrorMessage("AI api Error: " + err);
+                    vscode.window.showErrorMessage("API error: Failed to generate commit message: " + err);
                 }
             } catch (err) {
-                vscode.window.showErrorMessage("Error: " + err);
+                vscode.window.showErrorMessage("Failed to generate commit message" + err);
             }
         },
     );
