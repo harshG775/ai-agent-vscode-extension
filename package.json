@@ -3,6 +3,7 @@
     "displayName": "ai-agent-vscode-extension",
     "description": "",
     "version": "0.0.1",
+    "publisher": "harshG775",
     "engines": {
         "vscode": "^1.108.1"
     },
