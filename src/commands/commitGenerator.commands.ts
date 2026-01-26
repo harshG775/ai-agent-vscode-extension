@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { Commit, Repository } from "../types/git";
-const OPENROUTER_API_KEY = "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";
 
 const getDiff = async (repo: Repository, { maxChars = 12_000 }: { maxChars: number }) => {
     const changes = await repo.diffIndexWithHEAD();
@@ -86,6 +85,9 @@ commit message here
 };
 
 export const commitGeneratorCommand = async (repo: Repository) => {
+    const OPENROUTER_API_KEY = "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";
+    
+
     await vscode.window.withProgress(
         {
             location: vscode.ProgressLocation.SourceControl,
@@ -116,27 +118,29 @@ export const commitGeneratorCommand = async (repo: Repository) => {
 
                 console.log("messages for AI$$$:\n", messages);
 
-                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        model: "allenai/molmo-2-8b:free",
-                        temperature: 0,
-                        messages: messages,
-                        include_reasoning: true,
-                    }),
-                });
-
-                const result: any = await response.json();
-                const responseMessage = result.choices[0].message;
-                console.log(responseMessage.content);
-
-                repo.inputBox.value = responseMessage.content;
+                try {
+                    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            model: "allenai/molmo-2-8b:free",
+                            temperature: 0,
+                            messages: messages,
+                            include_reasoning: true,
+                        }),
+                    });
+                    const result: any = await response.json();
+                    // const responseMessage = result.choices[0].message;
+                    console.log(result);
+                    repo.inputBox.value = "responseMessage.content";
+                } catch (err) {
+                    vscode.window.showErrorMessage("AI api Error: " + err);
+                }
             } catch (err) {
-                vscode.window.showErrorMessage("Failed to get diff: " + err);
+                vscode.window.showErrorMessage("Error: " + err);
             }
         },
     );
