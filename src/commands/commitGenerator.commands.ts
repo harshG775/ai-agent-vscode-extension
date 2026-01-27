@@ -1,26 +1,5 @@
 import * as vscode from "vscode";
 import { Commit, Repository } from "../types/git";
-
-const getDiff = async (repo: Repository, { maxChars = 12_000 }: { maxChars: number }) => {
-    const changes = await repo.diffIndexWithHEAD();
-    if (changes.length <= 0) {
-        vscode.window.showWarningMessage("No changes in staging to analyze.");
-        return "";
-    }
-    let finalDiff = "";
-
-    for (const diff of changes) {
-        const fileDiff = await repo.diffIndexWithHEAD(diff.uri.fsPath);
-        if (finalDiff.length > maxChars) {
-            vscode.window.showWarningMessage("Staged changes are too large to summarize accurately.");
-            break;
-        }
-
-        finalDiff += `\n\n---\nFile: ${diff.uri.fsPath}\n---\n${fileDiff}`;
-    }
-    return finalDiff || "";
-};
-
 const buildCommitPrompt = ({
     diff,
     repoName,
@@ -96,20 +75,35 @@ export const commitGeneratorCommand = async (repo: Repository) => {
         },
         async () => {
             try {
-                const diff = await getDiff(repo, { maxChars: 12_000 });
+                const changes = await repo.diffIndexWithHEAD();
+
+                if (changes.length <= 0) {
+                    vscode.window.showWarningMessage("No changes in staging to analyze.");
+                    return;
+                }
+
+                let finalDiff = "";
+                for (const diff of changes) {
+                    const fileDiff = await repo.diffIndexWithHEAD(diff.uri.fsPath);
+                    if (finalDiff.length > 12_000) {
+                        vscode.window.showWarningMessage("Staged changes are too large to summarize accurately.");
+                        break;
+                    }
+                    finalDiff += `\n\n---\nFile: ${diff.uri.fsPath}\n---\n${fileDiff}`;
+                }
 
                 const repoName = repo.state.HEAD?.name || "repository: unknown";
 
                 const branchName = repo.rootUri.fsPath.split(/[\\/]/).pop() || "branch: unknown";
 
-                const recentRepoCommits = await repo.log({ maxEntries: 5 });
+                const recentRepoCommits = await repo.log({ maxEntries: 2 });
 
                 const userEmail = await repo.getConfig("user.email");
 
                 const recentUserCommits = recentRepoCommits.filter((c) => c.authorEmail === userEmail);
 
                 const messages = buildCommitPrompt({
-                    diff,
+                    diff: finalDiff,
                     repoName,
                     branchName,
                     recentUserCommits,
@@ -131,13 +125,15 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                         }),
                     });
                     const result: any = await response.json();
+
                     if (result?.error?.message) {
                         throw new Error(result.error.message);
                     }
+                    console.log("result", result?.choices[0]?.message?.content);
                     const responseMessage = result?.choices[0]?.message?.content as string;
                     repo.inputBox.value = responseMessage
                         .replace(/```[\s\S]*?```/g, (block) => block.replace(/```[\w]*\n?/g, "").replace(/```/g, ""))
-                        .trim();;
+                        .trim();
                 } catch (err) {
                     vscode.window.showErrorMessage("API error: Failed to generate commit message: " + err);
                 }
