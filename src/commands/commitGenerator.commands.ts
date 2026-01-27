@@ -131,7 +131,7 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                         }),
                     });
                     const result: any = await response.json();
-                    if (result.error.message) {
+                    if (result?.error?.message) {
                         throw new Error(result.error.message);
                     }
                     const responseMessage = result?.choices[0]?.message?.content as string;
