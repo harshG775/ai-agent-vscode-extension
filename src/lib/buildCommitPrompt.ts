@@ -29,7 +29,7 @@ export const buildCommitPrompt = ({
                   )
                   .join("\n")
             : "No original files provided.";
-    return `
+    const userPromptContent = `
 <repository-context>
 # REPOSITORY DETAILS:
 Repository name: ${repoName}
@@ -74,4 +74,18 @@ commit message goes here
 ${customInstructions}
 </custom-instructions>
 `;
+    return [
+        {
+            role: "system",
+            content: `
+You are an AI programming assistant, helping a software developer craft the best git commit messages for their code changes.
+You excel at interpreting the purpose behind code changes to generate concise, clear, and conventional commit messages.
+Follow Microsoft content policies and avoid unsafe or copyrighted content.
+`,
+        },
+        {
+            role: "user",
+            content: userPromptContent,
+        },
+    ];
 };

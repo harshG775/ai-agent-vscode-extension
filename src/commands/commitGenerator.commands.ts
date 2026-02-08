@@ -65,7 +65,6 @@ commit message here
 
 export const commitGeneratorCommand = async (repo: Repository) => {
     const OPENROUTER_API_KEY = "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";
-    
 
     await vscode.window.withProgress(
         {
