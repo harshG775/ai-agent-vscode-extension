@@ -76,7 +76,8 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
-                            model: "tngtech/deepseek-r1t2-chimera:free",
+                            // model: "tngtech/deepseek-r1t2-chimera:free",
+                            model: "xiaomi/mimo-v2-flash",
                             temperature: 0,
                             messages: messages,
                             include_reasoning: true,
