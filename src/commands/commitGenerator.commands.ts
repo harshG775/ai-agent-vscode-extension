@@ -1,70 +1,8 @@
 import * as vscode from "vscode";
-import { Commit, Repository } from "../types/git";
-const buildCommitPrompt = ({
-    diff,
-    repoName,
-    branchName,
-    recentUserCommits,
-    recentRepoCommits,
-}: {
-    diff: string;
-    repoName: string;
-    branchName: string;
-    recentUserCommits: Commit[];
-    recentRepoCommits: Commit[];
-}) => {
-    return [
-        {
-            role: "system",
-            content: `
-You are an AI programming assistant, helping a software developer craft the best git commit messages for their code changes.
-You excel at interpreting the purpose behind code changes to generate concise, clear, and conventional commit messages.
-Follow Microsoft content policies and avoid unsafe or copyrighted content.
-`,
-        },
-        {
-            role: "user",
-            content: `
-<repository-context>
-Repository name: ${repoName}
-Branch name: ${branchName}
-</repository-context>
-
-<user-commits>
-# RECENT USER COMMITS (for reference, do not copy):
-${recentUserCommits.map((c) => `- ${c.message}`).join("\n")}
-</user-commits>
-
-<recent-commits>
-# RECENT REPOSITORY COMMITS (for reference, do not copy):
-${recentRepoCommits.map((c) => `- ${c.message}`).join("\n")}
-</recent-commits>
-
-<changes>
-<code-changes>
-\`\`\`diff
-${diff}
-\`\`\`
-</code-changes>
-</changes>
-
-<reminder>
-Generate a single, concise commit message describing these changes.
-Follow Conventional Commit format.
-50-72 character title.
-Do NOT include backticks or explanations.
-ONLY return a single markdown code block:
-\`\`\`text
-commit message here
-\`\`\`
-</reminder>
-`,
-        },
-    ];
-};
-
+import { Repository } from "../types/git";
+import { buildCommitPrompt } from "../lib/buildCommitPrompt";
 export const commitGeneratorCommand = async (repo: Repository) => {
-    const OPENROUTER_API_KEY = "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";
+    const OPENROUTER_API_KEY = "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";
 
     await vscode.window.withProgress(
         {
@@ -82,6 +20,8 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                 }
 
                 let finalDiff = "";
+                const attachments = [];
+
                 for (const diff of changes) {
                     const fileDiff = await repo.diffIndexWithHEAD(diff.uri.fsPath);
                     if (finalDiff.length > 12_000) {
@@ -89,6 +29,27 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                         break;
                     }
                     finalDiff += `\n\n---\nFile: ${diff.uri.fsPath}\n---\n${fileDiff}`;
+                    //////////
+                    const filePath = diff.uri.fsPath;
+                    try {
+                        const originalContent = await repo.show("HEAD", filePath);
+
+                        const content =
+                            originalContent.length > 5000
+                                ? originalContent.substring(0, 5000) + "\n... [truncated]"
+                                : originalContent;
+
+                        attachments.push({
+                            id: filePath,
+                            path: vscode.workspace.asRelativePath(diff.uri),
+                            isSummarized: originalContent.length > 5000 ? "true" : "false",
+                            content: content,
+                        });
+                    } catch (e) {
+                        console.log(`New file detected or error fetching HEAD for ${filePath}`);
+                    }
+
+                    if (finalDiff.length > 15000) break;
                 }
 
                 const repoName = repo.state.HEAD?.name || "repository: unknown";
@@ -102,11 +63,13 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                 const recentUserCommits = recentRepoCommits.filter((c) => c.authorEmail === userEmail);
 
                 const messages = buildCommitPrompt({
-                    diff: finalDiff,
+                    diffs: finalDiff,
                     repoName,
                     branchName,
                     recentUserCommits,
-                    recentRepoCommits,
+                    recentCommits: recentRepoCommits,
+                    attachments: attachments,
+                    customInstructions: "",
                 });
                 console.log("messages for AI$$$:\n", messages);
                 try {
@@ -117,7 +80,7 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
-                            model: "allenai/molmo-2-8b:free",
+                            model: "tngtech/deepseek-r1t2-chimera:free",
                             temperature: 0,
                             messages: messages,
                             include_reasoning: true,
