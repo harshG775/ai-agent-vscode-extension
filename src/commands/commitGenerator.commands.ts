@@ -52,10 +52,6 @@ export const commitGeneratorCommand = async (repo: Repository) => {
                     if (finalDiff.length > 15000) break;
                 }
 
-                const repoName = repo.state.HEAD?.name || "repository: unknown";
-
-                const branchName = repo.rootUri.fsPath.split(/[\\/]/).pop() || "branch: unknown";
-
                 const recentRepoCommits = await repo.log({ maxEntries: 2 });
 
                 const userEmail = await repo.getConfig("user.email");
@@ -64,8 +60,8 @@ export const commitGeneratorCommand = async (repo: Repository) => {
 
                 const messages = buildCommitPrompt({
                     diffs: finalDiff,
-                    repoName,
-                    branchName,
+                    repoName: repo.state.HEAD?.name || "unknown",
+                    branchName: repo.rootUri.fsPath.split(/[\\/]/).pop() || "unknown",
                     recentUserCommits,
                     recentCommits: recentRepoCommits,
                     attachments: attachments,
