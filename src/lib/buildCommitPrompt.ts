@@ -1,4 +1,7 @@
-const formatList = (list: string[]) => (list?.length > 0 ? list.map((i) => `- ${i}`).join("\n") : "None provided.");
+import { Commit } from "../types/git";
+
+const formatList = (list: Commit[]) =>
+    list?.length > 0 ? list.map((c) => `- ${c.message}`).join("\n") : "None provided.";
 
 export const buildCommitPrompt = ({
     diffs,
@@ -12,8 +15,8 @@ export const buildCommitPrompt = ({
     diffs: string;
     repoName: string;
     branchName: string;
-    recentUserCommits: string[] | [];
-    recentCommits: string[] | [];
+    recentUserCommits: Commit[] | [];
+    recentCommits: Commit[] | [];
     attachments: { id: string; isSummarized: string; path: string; content: string }[];
     customInstructions: string;
 }) => {
