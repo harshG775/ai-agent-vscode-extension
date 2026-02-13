@@ -11,6 +11,9 @@
         "Other"
     ],
     "main": "./dist/extension.js",
+    "activationEvents": [
+        "onView:onyx.chatView"
+    ],
     "contributes": {
         "commands": [
             {
@@ -25,6 +28,24 @@
                     "command": "onyx.git.generateCommitMessage",
                     "when": "scmProvider == git",
                     "group": "navigation@1"
+                }
+            ]
+        },
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "onyx",
+                    "title": "Onyx",
+                    "icon": "media/commit.svg"
+                }
+            ]
+        },
+        "views": {
+            "onyx": [
+                {
+                    "id": "onyx.chatView",
+                    "name": "Onyx Chat",
+                    "icon": "media/commit.svg"
                 }
             ]
         }

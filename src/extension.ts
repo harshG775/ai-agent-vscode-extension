@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import { commitGeneratorCommand } from "./commands/commitGenerator.commands";
-import { GitExtension } from "./types/git";
+import { ChatViewProvider } from "./chat/chat-view-provider";
 
+import { GitExtension } from "./types/git";
 
 export const activate = async (context: vscode.ExtensionContext) => {
     const gitExtension = vscode.extensions.getExtension<GitExtension>("vscode.git");
@@ -14,7 +15,6 @@ export const activate = async (context: vscode.ExtensionContext) => {
     const gitApi = gitExports.getAPI(1);
     if (!gitApi) {
         console.error("Git API not found");
-        return;
     }
 
     context.subscriptions.push(
@@ -30,5 +30,8 @@ export const activate = async (context: vscode.ExtensionContext) => {
 
             await commitGeneratorCommand(repo);
         }),
+    );
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider("onyx.chatView", new ChatViewProvider(context)),
     );
 };
